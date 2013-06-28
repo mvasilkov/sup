@@ -63,6 +63,20 @@ def sup_mod(commands, cmd, action):
     sup_one(commands, cmd)
 
 
+def sup_mod_all(commands, action):
+    proc = list_processes()
+    for cmd, params in commands.iteritems():
+        started = params["process"] in proc
+        if ((action == "start" and started) or
+            (action == "stop" and not started)):
+            print(started_color("(started)") if started
+                  else stopped_color("(stopped)"), cmd)
+            continue
+        subprocess.call(commands[cmd][action], shell=True,
+                        stdin=sys.stdin, stdout=sys.stdout, stderr=sys.stderr)
+        sup_one(commands, cmd)
+
+
 def main():
     commands = {}
     for f in list_files():
@@ -71,7 +85,10 @@ def main():
     if len(sys.argv) == 2:
         sup_one(commands, sys.argv[1])
     elif len(sys.argv) == 3:
-        sup_mod(commands, sys.argv[1], sys.argv[2])
+        if sys.argv[1] in ("start", "stop") and sys.argv[2] == "all":
+            sup_mod_all(commands, sys.argv[1])
+        else:
+            sup_mod(commands, sys.argv[1], sys.argv[2])
     else:
         sup_all(commands)
 
