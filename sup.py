@@ -35,12 +35,44 @@ def sup_all(commands):
               else stopped_color("(stopped)"), cmd)
 
 
+def sup_one(commands, cmd):
+    if cmd in commands:
+        proc = list_processes()
+        started = commands[cmd]["process"] in proc
+        print(started_color("(started)") if started
+              else stopped_color("(stopped)"), cmd)
+    else:
+        print("Bad command")
+
+
+def sup_mod(commands, cmd, action):
+    if cmd not in commands:
+        print("Bad command")
+        return
+    if action not in ("start", "stop"):
+        print("Bad action")
+        return
+    proc = list_processes()
+    started = commands[cmd]["process"] in proc
+    if (action == "start" and started) or (action == "stop" and not started):
+        print(started_color("(started)") if started
+              else stopped_color("(stopped)"), cmd)
+        return
+    subprocess.call(commands[cmd][action], shell=True,
+                    stdin=sys.stdin, stdout=sys.stdout, stderr=sys.stderr)
+    sup_one(commands, cmd)
+
+
 def main():
     commands = {}
     for f in list_files():
         obj = json.loads(open(SUP_FMT % f).read())
         commands.update(obj)
-    if len(sys.argv) == 1:
+    if len(sys.argv) == 2:
+        sup_one(commands, sys.argv[1])
+    elif len(sys.argv) == 3:
+        sup_mod(commands, sys.argv[1], sys.argv[2])
+    else:
         sup_all(commands)
 
 if __name__ == "__main__":
